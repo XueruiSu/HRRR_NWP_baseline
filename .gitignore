@@ -1,0 +1,5 @@
+/__pycache__/
+/wandb/
+loss**
+mean_dict_**
+variance_dict_**
