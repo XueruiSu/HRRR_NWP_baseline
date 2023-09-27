@@ -7,6 +7,7 @@ import re
 from datetime import datetime, timedelta  
 import numpy as np
 import pickle  
+import torch
 
 # 取hrrr.t00z.wrfprsf01.grib2中特定变量的值（预测值）
 # 与hrrr.t01z.wrfprsf00.grib2中对应变量的值做loss。
@@ -34,6 +35,7 @@ class mean_M2():
             self.M2_dict[key] = 0
     
     def calc_mean_M2(self, loss_dict: dict):
+        print("calc_mean_M2:", self.n)
         for key in loss_dict.keys():
             self.n += 1  
             delta = loss_dict[key] - self.mean_dict[key]  
@@ -147,17 +149,21 @@ for day in day_list:
         else:
             mean_M2_dict.calc_mean_M2(loss_dict)
         # record mean and variance
+        wandb_log_dict = {}
         for key in loss_dict.keys():
-            wandb.log({key: loss_dict[key]})
             if mean_M2_dict.n >= 2:
                 mean_dict, variance_dict = mean_M2_dict.output_mean_M2()
-                wandb.log({f"{key}_mean": mean_dict[key], f"{key}_var": variance_dict[key]})
+                wandb_log_dict[f"{key}"] = loss_dict[key]
+                wandb_log_dict[f"{key}_mean"] = mean_dict[key]
+                wandb_log_dict[f"{key}_var"] = variance_dict[key]
+        wandb.log(wandb_log_dict)
         print("loss dict", len(loss_dict), len(mean_dict), len(variance_dict))
         if mean_M2_dict.n % 400 == 0:            
             # 保存字典到文件  
-            with open(f"mean_dict_{mean_M2_dict.n}.pkl", "wb") as f:  
+            torch.save(mean_M2_dict, f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.pt")
+            with open(f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
                 pickle.dump(mean_dict, f)  
-            with open(f"variance_dict_{mean_M2_dict.n}.pkl", "wb") as f:  
+            with open(f"./Loss_file/variance_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
                 pickle.dump(variance_dict, f)              
         ds_true.close()
         ds_pre.close()
