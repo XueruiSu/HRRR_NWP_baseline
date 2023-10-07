@@ -56,7 +56,7 @@ def plot_acc_figure_double(x, y_base, y_nwp, x_str, path_save, width_figure=6):
     better_str = ["B", "G"]
     num_better = np.sum(nwp_better)
     main_ax.scatter(x, y_base, marker='o', color='orange', zorder=3, label="Persistent") 
-    main_ax.scatter(x, y_nwp, marker='d', color='red', zorder=3, label=f"NWP_{num_better}") 
+    main_ax.scatter(x, y_nwp, marker='d', color='red', zorder=3, label=f"NWP") 
     # 在每个数据点上标出数值的大小  
     for i, value in enumerate(y_base):  
         main_ax.annotate(f"{value:.3g}", (x[i], y_base[i]), textcoords="offset points", 
@@ -70,6 +70,7 @@ def plot_acc_figure_double(x, y_base, y_nwp, x_str, path_save, width_figure=6):
     main_ax.set_xticklabels(x_str)  
     plt.yscale('log')
     plt.legend()
+    plt.title(f"MSE_of_NWP Better_Num:{num_better}")
     plt.savefig(path_save)
     plt.show()  
 

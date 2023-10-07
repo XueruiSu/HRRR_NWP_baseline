@@ -36,8 +36,8 @@ class mean_M2():
     
     def calc_mean_M2(self, loss_dict: dict):
         print("calc_mean_M2:", self.n)
+        self.n += 1  
         for key in loss_dict.keys():
-            self.n += 1  
             delta = loss_dict[key] - self.mean_dict[key]  
             self.mean_dict[key] += delta / self.n  
             delta2 = loss_dict[key] - self.mean_dict[key]  
@@ -93,7 +93,7 @@ def generate_date_list(start_date, end_date):
   
     return date_list 
   
-start_date = "20200630"
+start_date = "20200701"
 end_date = "20201231"
 day_list = generate_date_list(start_date, end_date)  
 print(day_list)  
@@ -102,7 +102,8 @@ hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
              "20", "21", "22", "23"]
 LV_SELECTION = {"lv_HTGL1": 10.0}
 
-wandb.init(project="physical_baseline", name="20200630_to_20201231")  
+os.environ["WANDB_API_KEY"] = "e7b8eb712ec5e4421e767376055ddfafb01432ca"
+wandb.init(project="physical_baseline", name=f"{start_date}_to_{end_date}")  
 first_time = True
 for day in day_list:
     for hour in hour_list:
@@ -156,8 +157,9 @@ for day in day_list:
                 wandb_log_dict[f"{key}"] = loss_dict[key]
                 wandb_log_dict[f"{key}_mean"] = mean_dict[key]
                 wandb_log_dict[f"{key}_var"] = variance_dict[key]
-        wandb.log(wandb_log_dict)
-        print("loss dict", len(loss_dict), len(mean_dict), len(variance_dict))
+        if mean_M2_dict.n >= 2:
+            wandb.log(wandb_log_dict)
+            print("loss dict", mean_M2_dict.n, len(loss_dict), len(mean_dict), len(variance_dict))
         if mean_M2_dict.n % 400 == 0:            
             # 保存字典到文件  
             torch.save(mean_M2_dict, f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.pt")
@@ -168,6 +170,13 @@ for day in day_list:
         ds_true.close()
         ds_pre.close()
         ds_input.close()
+
+# 保存字典到文件  
+torch.save(mean_M2_dict, f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.torch")
+with open(f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+    pickle.dump(mean_dict, f)  
+with open(f"./Loss_file/variance_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+    pickle.dump(variance_dict, f)      
 
 
 
