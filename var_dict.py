@@ -14,33 +14,33 @@
 #       ]
 
 PRESSURE_VARS = [
-    "SPFH_P0_L100_GLC0", # specific_humidity, q
-    "TMP_P0_L100_GLC0", # temperature, t
+    "HGT_P0_L100_GLC0", # geopotential, hgtn
     "UGRD_P0_L100_GLC0", # u_component_of_wind, u
     "VGRD_P0_L100_GLC0", # v_component_of_wind, v
-    "HGT_P0_L100_GLC0", # geopotential, hgtn
+    "TMP_P0_L100_GLC0", # temperature, t
+    "SPFH_P0_L100_GLC0", # specific_humidity, q
 ]
 
 SURFACE_VARS = [
+    "MSLMA_P0_L101_GLC0", # mean_sea_level_pressure, msl
+    "TMP_P0_L103_GLC0", # 2m_temperature, 2t
     "UGRD_P0_L103_GLC0", # 10m_u_component_of_wind, 10u
     "VGRD_P0_L103_GLC0", # 10m_v_component_of_wind, 10v
-    "TMP_P0_L103_GLC0", # 2m_temperature, 2t
-    "MSLMA_P0_L101_GLC0", # mean_sea_level_pressure, msl
 ]
 
 # ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
 # need to change:
 # var to be choosen:
 var_mapping = {
+    "HGT_P0_L100_GLC0": "hgtn",
+    "UGRD_P0_L100_GLC0": "u",
+    "VGRD_P0_L100_GLC0": "v",
+    "TMP_P0_L100_GLC0": "t",
     "SPFH_P0_L100_GLC0": "q",
-    # "TMP_P0_L100_GLC0": "t",
-    # "UGRD_P0_L100_GLC0": "u",
-    # "VGRD_P0_L100_GLC0": "v",
-    # "HGT_P0_L100_GLC0": "hgtn",
-    # "UGRD_P0_L103_GLC0": "10u",
-    # "VGRD_P0_L103_GLC0": "10v",
-    # "TMP_P0_L103_GLC0": "2t",
-    # "MSLMA_P0_L101_GLC0": "msl",
+    "MSLMA_P0_L101_GLC0": "msl",
+    "TMP_P0_L103_GLC0": "2t",
+    "UGRD_P0_L103_GLC0": "10u",
+    "VGRD_P0_L103_GLC0": "10v",
 }
 # level to be choosen:
 atmos_level = [
