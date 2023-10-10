@@ -137,9 +137,9 @@ def plot_based_acc_2_1_2(var_mapping, atmos_level, mean_dict: dict, variance_dic
                            mean_dict_base.keys(), path_save_double, len(level_mean))
 
 # 从文件中加载字典  
-with open("./Loss_file/mean_dict_20400.pkl", "rb") as f:  
+with open("./Loss_file/mean_dict_600.pkl", "rb") as f:  
     mean_dict = pickle.load(f)  
-with open("./Loss_file/variance_dict_20400.pkl", "rb") as f:
+with open("./Loss_file/variance_dict_600.pkl", "rb") as f:
     variance_dict = pickle.load(f)
     
 print("all var:", mean_dict.keys())

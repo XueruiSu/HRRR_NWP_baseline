@@ -117,6 +117,7 @@ for day in day_list:
         ds_input = xr.open_dataset(os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", 
                                         file_name_input), engine="pynio")
         loss_dict = {}
+        wandb_log_dict = {}
         for var in PRESSURE_VARS+SURFACE_VARS:
             if var in PRESSURE_VARS:
                 atmos_var_true_value = ds_true[var].to_numpy()
@@ -130,7 +131,7 @@ for day in day_list:
                     images = [wandb.Image(atmos_var_input_value[level_index]), 
                               wandb.Image(atmos_var_true_value[level_index]), 
                               wandb.Image(atmos_var_pre_value[level_index])]  
-                    wandb.log({f"{var}_{level_index}_input_true_pre": images})  
+                    wandb_log_dict[f"{var}_{level_index}_input_true_pre"] = images
             elif var == "UGRD_P0_L103_GLC0" or var == "VGRD_P0_L103_GLC0":
                 atmos_var_true_value = ds_true[var].sel(LV_SELECTION).to_numpy()
                 atmos_var_pre_value = ds_pre[var].sel(LV_SELECTION).to_numpy()
@@ -142,7 +143,7 @@ for day in day_list:
                 images = [wandb.Image(atmos_var_input_value), 
                             wandb.Image(atmos_var_true_value), 
                             wandb.Image(atmos_var_pre_value)]  
-                wandb.log({f"{var}_input_true_pre": images})  
+                wandb_log_dict[f"{var}_input_true_pre"] = images 
             else:
                 atmos_var_true_value = ds_true[var].to_numpy()
                 atmos_var_pre_value = ds_pre[var].to_numpy()
@@ -154,7 +155,7 @@ for day in day_list:
                 images = [wandb.Image(atmos_var_input_value), 
                             wandb.Image(atmos_var_true_value), 
                             wandb.Image(atmos_var_pre_value)]  
-                wandb.log({f"{var}_input_true_pre": images})  
+                wandb_log_dict[f"{var}_input_true_pre"] = images
         t2 = time.time()
         print("day:", file_name_input, "time:", t2-t1) # 计算一条数据上所有的loss所需的时间。          
         # calc mean and variance
@@ -165,7 +166,6 @@ for day in day_list:
         else:
             mean_M2_dict.calc_mean_M2(loss_dict)
         # record mean and variance
-        wandb_log_dict = {}
         for key in loss_dict.keys():
             if mean_M2_dict.n >= 2:
                 mean_dict, variance_dict = mean_M2_dict.output_mean_M2()
@@ -175,7 +175,7 @@ for day in day_list:
         if mean_M2_dict.n >= 2:
             wandb.log(wandb_log_dict)
             print("loss dict", mean_M2_dict.n, len(loss_dict), len(mean_dict), len(variance_dict))
-        if mean_M2_dict.n % 20 == 0:            
+        if mean_M2_dict.n % 150 == 0:            
             # 保存字典到文件  
             torch.save(mean_M2_dict, f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.pt")
             with open(f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
