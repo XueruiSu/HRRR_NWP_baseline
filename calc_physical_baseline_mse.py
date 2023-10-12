@@ -93,7 +93,7 @@ def generate_date_list(start_date, end_date):
   
     return date_list 
   
-start_date = "20200701"
+start_date = "20200920"
 end_date = "20201231"
 day_list = generate_date_list(start_date, end_date)  
 print(day_list)  
@@ -105,6 +105,7 @@ LV_SELECTION = {"lv_HTGL1": 10.0}
 os.environ["WANDB_API_KEY"] = "e7b8eb712ec5e4421e767376055ddfafb01432ca"
 wandb.init(project="physical_baseline", name=f"{start_date}_to_{end_date}")  
 first_time = True
+reload_bool = True
 for day in day_list:
     for hour in hour_list:
         t1 = time.time()
@@ -161,6 +162,8 @@ for day in day_list:
         # calc mean and variance
         if first_time:
             mean_M2_dict = mean_M2(loss_dict)
+            if reload_bool:
+                mean_M2_dict = torch.load(f"./Loss_file/mean_dict_1950.pt")
             mean_M2_dict.calc_mean_M2(loss_dict)
             first_time = False
         else:
@@ -186,11 +189,12 @@ for day in day_list:
         ds_pre.close()
         ds_input.close()
 
-# 保存字典到文件  
-torch.save(mean_M2_dict, f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.torch")
-with open(f"./Loss_file/mean_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+# 保存字典到文件
+file_dir = "/blob/kmsw0eastau/data/hrrr"  
+torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_{str(mean_M2_dict.n)}.torch")
+with open(f"{file_dir}/Nwp_loss_file/mean_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
     pickle.dump(mean_dict, f)  
-with open(f"./Loss_file/variance_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+with open(f"{file_dir}/Nwp_loss_file/variance_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
     pickle.dump(variance_dict, f)      
 
 
