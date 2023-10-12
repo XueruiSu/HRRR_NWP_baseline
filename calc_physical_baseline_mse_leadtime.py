@@ -8,6 +8,20 @@ from datetime import datetime, timedelta
 import numpy as np
 import pickle  
 import torch
+import sys
+import argparse  
+
+# 带参数表示true，不带参数表示False.
+def get_args(argv=None):  
+    parser = argparse.ArgumentParser(description='Put your hyperparameters')  
+    parser.add_argument('-leadtime', '--leadtime', default=1, type=int, help='leadtime')  
+    parser.add_argument('-start_date', '--start_date', default="20190701", type=str, help='start_date')  
+    parser.add_argument('-reload_bool', '--reload_bool', action='store_true', help='reload_bool or not')  
+    return parser.parse_args(argv)  
+  
+# args parser  
+args = get_args(sys.argv[1:])  
+print(args)  
 
 # 取hrrr.t00z.wrfprsf01.grib2中特定变量的值（预测值）
 # 与hrrr.t01z.wrfprsf00.grib2中对应变量的值做loss。
@@ -52,7 +66,7 @@ class mean_M2():
                 self.variance[key] = self.M2_dict[key] / (self.n - 1)
             return self.mean_dict, self.variance  
 
-def get_file_name(file_name_input):
+def get_file_name(file_name_input, leadtime=1):
     # 定义正则表达式模式  
     pattern = r'(\d{8})/hrrr.t(\d{2})z.wrfprsf(\d{2}).grib2'  
     # 使用 re.search() 查找匹配项  
@@ -70,11 +84,11 @@ def get_file_name(file_name_input):
             date_obj += timedelta(days=1)  
             # 将日期对象转换回字符串  
             new_date_str = date_obj.strftime("%Y%m%d") 
-            file_name_true = f"{new_date_str}/hrrr.t00z.wrfprsf{prsf_value:02d}.grib2"
-            file_name_pre = f"{new_date_str}/hrrr.t{t_value:02d}z.wrfprsf{prsf_value+1:02d}.grib2"
+            file_name_true = f"{new_date_str}/hrrr.t{(leadtime-1):02d}z.wrfprsf{prsf_value:02d}.grib2"
+            file_name_pre = f"{new_date_str}/hrrr.t{t_value:02d}z.wrfprsf{prsf_value+leadtime:02d}.grib2"
         else:
-            file_name_true = f"{date_str}/hrrr.t{t_value+1:02d}z.wrfprsf{prsf_value:02d}.grib2"
-            file_name_pre = f"{date_str}/hrrr.t{t_value:02d}z.wrfprsf{prsf_value+1:02d}.grib2"
+            file_name_true = f"{date_str}/hrrr.t{t_value+leadtime:02d}z.wrfprsf{prsf_value:02d}.grib2"
+            file_name_pre = f"{date_str}/hrrr.t{t_value:02d}z.wrfprsf{prsf_value+leadtime:02d}.grib2"
     else:  
         print("File name wrong. No pre found!")  
 
@@ -94,7 +108,7 @@ def generate_date_list(start_date, end_date):
     return date_list 
   
 file_dir = "/blob/kmsw0eastau/data/hrrr"
-start_date = "20200920"
+start_date = args.start_date
 end_date = "20201231"
 day_list = generate_date_list(start_date, end_date)  
 print(day_list)  
@@ -104,14 +118,14 @@ hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
 LV_SELECTION = {"lv_HTGL1": 10.0}
 
 os.environ["WANDB_API_KEY"] = "e7b8eb712ec5e4421e767376055ddfafb01432ca"
-wandb.init(project="physical_baseline", name=f"{start_date}_to_{end_date}")  
+wandb.init(project="physical_baseline", name=f"{start_date}_to_{end_date}_lt{args.leadtime}")  
 first_time = True
-reload_bool = True
+reload_bool = args.reload_bool
 for day in day_list:
     for hour in hour_list:
         t1 = time.time()
         file_name_input = f"{day}/hrrr.t{hour}z.wrfprsf00.grib2"
-        file_name_true, file_name_pre = get_file_name(file_name_input)
+        file_name_true, file_name_pre = get_file_name(file_name_input, leadtime=args.leadtime)
         ds_true = xr.open_dataset(os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", 
                                         file_name_true), engine="pynio")
         ds_pre = xr.open_dataset(os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", 
@@ -164,7 +178,7 @@ for day in day_list:
         if first_time:
             mean_M2_dict = mean_M2(loss_dict)
             if reload_bool:
-                mean_M2_dict = torch.load(f"./Loss_file/mean_dict_1950.pt")
+                mean_M2_dict = torch.load(f"./Loss_file/mean_dict_2100.pt")
             mean_M2_dict.calc_mean_M2(loss_dict)
             first_time = False
         else:
@@ -181,21 +195,21 @@ for day in day_list:
             print("loss dict", mean_M2_dict.n, len(loss_dict), len(mean_dict), len(variance_dict))
         if mean_M2_dict.n % 150 == 0:            
             # 保存字典到文件  
-            torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_{str(mean_M2_dict.n)}.pt")
-            with open(f"{file_dir}/Nwp_loss_file/mean_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+            torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.torch")
+            with open(f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
                 pickle.dump(mean_dict, f)  
-            with open(f"{file_dir}/Nwp_loss_file/variance_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+            with open(f"{file_dir}/Nwp_loss_file/variance_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
                 pickle.dump(variance_dict, f)              
         ds_true.close()
         ds_pre.close()
         ds_input.close()
 
 # 保存字典到文件
-torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_{str(mean_M2_dict.n)}.torch")
-with open(f"{file_dir}/Nwp_loss_file/mean_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.torch")
+with open(f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
     pickle.dump(mean_dict, f)  
-with open(f"{file_dir}/Nwp_loss_file/variance_dict_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
-    pickle.dump(variance_dict, f)      
+with open(f"{file_dir}/Nwp_loss_file/variance_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+    pickle.dump(variance_dict, f)     
 
 
 
