@@ -5,3 +5,5 @@ mean_dict_**
 variance_dict_**
 /Loss_file/
 /figure/
+/**.gif
+/**.npy

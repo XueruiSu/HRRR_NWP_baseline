@@ -117,8 +117,16 @@ hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
              "20", "21", "22", "23"]
 LV_SELECTION = {"lv_HTGL1": 10.0}
 
+def RMSE(target, pre):
+    return np.sqrt(((pre - target)**2).mean())
+
+def RMSE_cut(target, pre, cut_len=60):
+    SE = (pre - target)**2
+    return np.sqrt((SE[cut_len:-cut_len, cut_len:-cut_len]).mean())
+
+loss_func = RMSE_cut
 os.environ["WANDB_API_KEY"] = "e7b8eb712ec5e4421e767376055ddfafb01432ca"
-wandb.init(project="physical_baseline", name=f"{start_date}_to_{end_date}_lt{args.leadtime}")  
+wandb.init(project=f"physical_baseline_lt{args.leadtime}", name=f"{start_date}_to_{end_date}_lt{args.leadtime}")  
 first_time = True
 reload_bool = args.reload_bool
 for day in day_list:
@@ -141,8 +149,8 @@ for day in day_list:
                 atmos_var_input_value = ds_input[var].to_numpy()
                 print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
                 for level_index in range(atmos_var_pre_value.shape[0]):
-                    loss_dict[f"{var}_{level_index}_hrrr_forecast_mse"] = np.sqrt(((atmos_var_true_value[level_index] - atmos_var_pre_value[level_index])**2).mean())
-                    loss_dict[f"{var}_{level_index}_hrrr_base_mse"] = np.sqrt(((atmos_var_true_value[level_index] - atmos_var_input_value[level_index])**2).mean())
+                    loss_dict[f"{var}_{level_index}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value[level_index], atmos_var_pre_value[level_index])
+                    loss_dict[f"{var}_{level_index}_hrrr_base_mse"] = loss_func(atmos_var_true_value[level_index], atmos_var_input_value[level_index])
                     # 记录图像集合  
                     images = [wandb.Image(atmos_var_input_value[level_index]), 
                               wandb.Image(atmos_var_true_value[level_index]), 
@@ -153,8 +161,8 @@ for day in day_list:
                 atmos_var_pre_value = ds_pre[var].sel(LV_SELECTION).to_numpy()
                 atmos_var_input_value = ds_input[var].sel(LV_SELECTION).to_numpy()
                 print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
-                loss_dict[f"{var}_hrrr_forecast_mse"] = np.sqrt(((atmos_var_true_value - atmos_var_pre_value)**2).mean())
-                loss_dict[f"{var}_hrrr_base_mse"] = np.sqrt(((atmos_var_true_value - atmos_var_input_value)**2).mean())
+                loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value, atmos_var_pre_value)
+                loss_dict[f"{var}_hrrr_base_mse"] = loss_func(atmos_var_true_value, atmos_var_input_value) 
                 # 记录图像集合  
                 images = [wandb.Image(atmos_var_input_value), 
                             wandb.Image(atmos_var_true_value), 
@@ -165,15 +173,15 @@ for day in day_list:
                 atmos_var_pre_value = ds_pre[var].to_numpy()
                 atmos_var_input_value = ds_input[var].to_numpy()
                 print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
-                loss_dict[f"{var}_hrrr_forecast_mse"] = np.sqrt(((atmos_var_true_value - atmos_var_pre_value)**2).mean())
-                loss_dict[f"{var}_hrrr_base_mse"] = np.sqrt(((atmos_var_true_value - atmos_var_input_value)**2).mean())
+                loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value, atmos_var_pre_value)
+                loss_dict[f"{var}_hrrr_base_mse"] = loss_func(atmos_var_true_value, atmos_var_input_value) 
                 # 记录图像集合  
                 images = [wandb.Image(atmos_var_input_value), 
                             wandb.Image(atmos_var_true_value), 
                             wandb.Image(atmos_var_pre_value)]  
                 wandb_log_dict[f"{var}_input_true_pre"] = images
         t2 = time.time()
-        print("day:", file_name_input, "time:", t2-t1) # 计算一条数据上所有的loss所需的时间。          
+        print("day:", file_name_input, file_name_true, file_name_pre, "time:", t2-t1) # 计算一条数据上所有的loss所需的时间。          
         # calc mean and variance
         if first_time:
             mean_M2_dict = mean_M2(loss_dict)
