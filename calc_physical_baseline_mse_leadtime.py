@@ -129,88 +129,98 @@ os.environ["WANDB_API_KEY"] = "e7b8eb712ec5e4421e767376055ddfafb01432ca"
 wandb.init(project=f"physical_baseline_lt{args.leadtime}", name=f"{start_date}_to_{end_date}_lt{args.leadtime}")  
 first_time = True
 reload_bool = args.reload_bool
+file_names_null_dict = []
+file_names_null_num = 0
 for day in day_list:
     for hour in hour_list:
         t1 = time.time()
         file_name_input = f"{day}/hrrr.t{hour}z.wrfprsf00.grib2"
         file_name_true, file_name_pre = get_file_name(file_name_input, leadtime=args.leadtime)
-        ds_true = xr.open_dataset(os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", 
-                                        file_name_true), engine="pynio")
-        ds_pre = xr.open_dataset(os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", 
-                                        file_name_pre), engine="pynio")
-        ds_input = xr.open_dataset(os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", 
-                                        file_name_input), engine="pynio")
-        loss_dict = {}
-        wandb_log_dict = {}
-        for var in PRESSURE_VARS+SURFACE_VARS:
-            if var in PRESSURE_VARS:
-                atmos_var_true_value = ds_true[var].to_numpy()
-                atmos_var_pre_value = ds_pre[var].to_numpy()
-                atmos_var_input_value = ds_input[var].to_numpy()
-                print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
-                for level_index in range(atmos_var_pre_value.shape[0]):
-                    loss_dict[f"{var}_{level_index}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value[level_index], atmos_var_pre_value[level_index])
-                    loss_dict[f"{var}_{level_index}_hrrr_base_mse"] = loss_func(atmos_var_true_value[level_index], atmos_var_input_value[level_index])
+        true_path = os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", file_name_true)
+        pre_path = os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", file_name_pre)
+        input_path = os.path.join(f"/blob/kmsw0eastau/data/hrrr/grib2/hrrr", file_name_input)
+        if os.path.exists(true_path) and os.path.exists(pre_path) and os.path.exists(input_path):
+            ds_true = xr.open_dataset(true_path, engine="pynio")
+            ds_pre = xr.open_dataset(pre_path, engine="pynio")
+            ds_input = xr.open_dataset(input_path, engine="pynio")
+            loss_dict = {}
+            wandb_log_dict = {}
+            for var in PRESSURE_VARS+SURFACE_VARS:
+                if var in PRESSURE_VARS:
+                    atmos_var_true_value = ds_true[var].to_numpy()
+                    atmos_var_pre_value = ds_pre[var].to_numpy()
+                    atmos_var_input_value = ds_input[var].to_numpy()
+                    print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
+                    for level_index in range(atmos_var_pre_value.shape[0]):
+                        loss_dict[f"{var}_{level_index}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value[level_index], atmos_var_pre_value[level_index])
+                        loss_dict[f"{var}_{level_index}_hrrr_base_mse"] = loss_func(atmos_var_true_value[level_index], atmos_var_input_value[level_index])
+                        # 记录图像集合  
+                        images = [wandb.Image(atmos_var_input_value[level_index]), 
+                                wandb.Image(atmos_var_true_value[level_index]), 
+                                wandb.Image(atmos_var_pre_value[level_index])]  
+                        wandb_log_dict[f"{var}_{level_index}_input_true_pre"] = images
+                elif var == "UGRD_P0_L103_GLC0" or var == "VGRD_P0_L103_GLC0":
+                    atmos_var_true_value = ds_true[var].sel(LV_SELECTION).to_numpy()
+                    atmos_var_pre_value = ds_pre[var].sel(LV_SELECTION).to_numpy()
+                    atmos_var_input_value = ds_input[var].sel(LV_SELECTION).to_numpy()
+                    print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
+                    loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value, atmos_var_pre_value)
+                    loss_dict[f"{var}_hrrr_base_mse"] = loss_func(atmos_var_true_value, atmos_var_input_value) 
                     # 记录图像集合  
-                    images = [wandb.Image(atmos_var_input_value[level_index]), 
-                              wandb.Image(atmos_var_true_value[level_index]), 
-                              wandb.Image(atmos_var_pre_value[level_index])]  
-                    wandb_log_dict[f"{var}_{level_index}_input_true_pre"] = images
-            elif var == "UGRD_P0_L103_GLC0" or var == "VGRD_P0_L103_GLC0":
-                atmos_var_true_value = ds_true[var].sel(LV_SELECTION).to_numpy()
-                atmos_var_pre_value = ds_pre[var].sel(LV_SELECTION).to_numpy()
-                atmos_var_input_value = ds_input[var].sel(LV_SELECTION).to_numpy()
-                print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
-                loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value, atmos_var_pre_value)
-                loss_dict[f"{var}_hrrr_base_mse"] = loss_func(atmos_var_true_value, atmos_var_input_value) 
-                # 记录图像集合  
-                images = [wandb.Image(atmos_var_input_value), 
-                            wandb.Image(atmos_var_true_value), 
-                            wandb.Image(atmos_var_pre_value)]  
-                wandb_log_dict[f"{var}_input_true_pre"] = images 
+                    images = [wandb.Image(atmos_var_input_value), 
+                                wandb.Image(atmos_var_true_value), 
+                                wandb.Image(atmos_var_pre_value)]  
+                    wandb_log_dict[f"{var}_input_true_pre"] = images 
+                else:
+                    atmos_var_true_value = ds_true[var].to_numpy()
+                    atmos_var_pre_value = ds_pre[var].to_numpy()
+                    atmos_var_input_value = ds_input[var].to_numpy()
+                    print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
+                    loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value, atmos_var_pre_value)
+                    loss_dict[f"{var}_hrrr_base_mse"] = loss_func(atmos_var_true_value, atmos_var_input_value) 
+                    # 记录图像集合  
+                    images = [wandb.Image(atmos_var_input_value), 
+                                wandb.Image(atmos_var_true_value), 
+                                wandb.Image(atmos_var_pre_value)]  
+                    wandb_log_dict[f"{var}_input_true_pre"] = images
+            t2 = time.time()
+            print("day:", file_name_input, file_name_true, file_name_pre, "time:", t2-t1) # 计算一条数据上所有的loss所需的时间。          
+            # calc mean and variance
+            if first_time:
+                mean_M2_dict = mean_M2(loss_dict)
+                if reload_bool:
+                    mean_M2_dict = torch.load(f"{file_dir}/Nwp_loss_file/mean_dict_lt1_3300.torch")
+                mean_M2_dict.calc_mean_M2(loss_dict)
+                first_time = False
             else:
-                atmos_var_true_value = ds_true[var].to_numpy()
-                atmos_var_pre_value = ds_pre[var].to_numpy()
-                atmos_var_input_value = ds_input[var].to_numpy()
-                print(var, atmos_var_true_value.shape, atmos_var_pre_value.shape, atmos_var_input_value.shape)
-                loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(atmos_var_true_value, atmos_var_pre_value)
-                loss_dict[f"{var}_hrrr_base_mse"] = loss_func(atmos_var_true_value, atmos_var_input_value) 
-                # 记录图像集合  
-                images = [wandb.Image(atmos_var_input_value), 
-                            wandb.Image(atmos_var_true_value), 
-                            wandb.Image(atmos_var_pre_value)]  
-                wandb_log_dict[f"{var}_input_true_pre"] = images
-        t2 = time.time()
-        print("day:", file_name_input, file_name_true, file_name_pre, "time:", t2-t1) # 计算一条数据上所有的loss所需的时间。          
-        # calc mean and variance
-        if first_time:
-            mean_M2_dict = mean_M2(loss_dict)
-            if reload_bool:
-                mean_M2_dict = torch.load(f"./Loss_file/mean_dict_2100.pt")
-            mean_M2_dict.calc_mean_M2(loss_dict)
-            first_time = False
-        else:
-            mean_M2_dict.calc_mean_M2(loss_dict)
-        # record mean and variance
-        for key in loss_dict.keys():
+                mean_M2_dict.calc_mean_M2(loss_dict)
+            # record mean and variance
+            for key in loss_dict.keys():
+                if mean_M2_dict.n >= 2:
+                    mean_dict, variance_dict = mean_M2_dict.output_mean_M2()
+                    wandb_log_dict[f"{key}"] = loss_dict[key]
+                    wandb_log_dict[f"{key}_mean"] = mean_dict[key]
+                    wandb_log_dict[f"{key}_var"] = variance_dict[key]
             if mean_M2_dict.n >= 2:
-                mean_dict, variance_dict = mean_M2_dict.output_mean_M2()
-                wandb_log_dict[f"{key}"] = loss_dict[key]
-                wandb_log_dict[f"{key}_mean"] = mean_dict[key]
-                wandb_log_dict[f"{key}_var"] = variance_dict[key]
-        if mean_M2_dict.n >= 2:
-            wandb.log(wandb_log_dict)
-            print("loss dict", mean_M2_dict.n, len(loss_dict), len(mean_dict), len(variance_dict))
-        if mean_M2_dict.n % 150 == 0:            
-            # 保存字典到文件  
-            torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.torch")
-            with open(f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
-                pickle.dump(mean_dict, f)  
-            with open(f"{file_dir}/Nwp_loss_file/variance_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
-                pickle.dump(variance_dict, f)              
-        ds_true.close()
-        ds_pre.close()
-        ds_input.close()
+                wandb.log(wandb_log_dict)
+                print("loss dict", mean_M2_dict.n, len(loss_dict), len(mean_dict), len(variance_dict))
+            if mean_M2_dict.n % 150 == 0:            
+                # 保存字典到文件  
+                torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.torch")
+                with open(f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+                    pickle.dump(mean_dict, f)  
+                with open(f"{file_dir}/Nwp_loss_file/variance_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
+                    pickle.dump(variance_dict, f)              
+            ds_true.close()
+            ds_pre.close()
+            ds_input.close()
+        else:
+            print(f"day:{day}{hour} not in file_names")
+            file_names_null_dict.append([f"{day}{hour}", file_name_input, file_name_true, file_name_pre])
+            file_names_null_num += 1
+            if file_names_null_num % 20 == 0:
+                torch.save(file_names_null_dict, f"{file_dir}/Nwp_loss_file/grib2_file_names_null_dict_num{file_names_null_num}.torch")
+            continue
 
 # 保存字典到文件
 torch.save(mean_M2_dict, f"{file_dir}/Nwp_loss_file/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.torch")
