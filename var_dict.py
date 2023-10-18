@@ -42,6 +42,34 @@ var_mapping = {
     "UGRD_P0_L103_GLC0": "10u",
     "VGRD_P0_L103_GLC0": "10v",
 }
+var_mapping_herbie = {
+    "HGT": "hgtn",
+    "UGRD": "u",
+    "VGRD": "v",
+    "TMP": "t",
+    "SPFH": "q",
+    "MSLMA:mean sea level": "msl",
+    "TMP:2 m above": "2t",
+    "UGRD:10 m above": "10u",
+    "VGRD:10 m above": "10v",
+}
+var_mapping_hrrrlong_herbie = {
+    "HGT_P0_L100_GLC0": "HGT",
+    "UGRD_P0_L100_GLC0": "UGRD",
+    "VGRD_P0_L100_GLC0": "VGRD",
+    "TMP_P0_L100_GLC0": "TMP",
+    "SPFH_P0_L100_GLC0": "SPFH",
+    "MSLMA_P0_L101_GLC0": "MSLMA:mean sea level",
+    "TMP_P0_L103_GLC0": "TMP:2 m above",
+    "UGRD_P0_L103_GLC0": "UGRD:10 m above",
+    "VGRD_P0_L103_GLC0": "VGRD:10 m above",
+}
+atmos_level_herbie = [
+    50, 100, 150, 200, 250, 300, 400,
+    500, 600, 700, 850, 925, 1000
+]
+
+
 # level to be choosen:
 atmos_level = [
     5000, 10000, 15000, 20000, 25000, 30000, 40000,
@@ -69,7 +97,7 @@ def atmos_level2index_in_atmos_level_all(atmos_level):
         index_level_mapping[index] = atmos_level_all[index]
     return index_in_atmos_level_all, index_level_mapping
 
-index_level_mapping = atmos_level2index_in_atmos_level_all(atmos_level)
+index_in_atmos_level_all, index_level_mapping = atmos_level2index_in_atmos_level_all(atmos_level)
 
 
 # print(index_level_mapping, index_in_atmos_level_all)

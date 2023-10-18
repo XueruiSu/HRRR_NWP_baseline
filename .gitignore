@@ -8,3 +8,14 @@ variance_dict_**
 /**.gif
 /**.npy
 /**.csv
+/**.grib2
+/nwp**.sh
+/random_test/
+/cme**/
+/eow**/
+/msc**/
+/**/**/.amlt**
+/**/a.txt
+/Nwp_loss_file/
+/amlt/
+

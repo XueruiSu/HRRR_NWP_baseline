@@ -16,6 +16,7 @@ def get_args(argv=None):
     parser = argparse.ArgumentParser(description='Put your hyperparameters')  
     parser.add_argument('-leadtime', '--leadtime', default=1, type=int, help='leadtime')  
     parser.add_argument('-start_date', '--start_date', default="20190701", type=str, help='start_date')  
+    parser.add_argument('-end_date', '--end_date', default="20190801", type=str, help='end_date')  
     parser.add_argument('-reload_bool', '--reload_bool', action='store_true', help='reload_bool or not')  
     return parser.parse_args(argv)  
   
@@ -100,7 +101,7 @@ def generate_date_list(start_date, end_date):
     date_list = []  
     current_date_obj = start_date_obj  
   
-    while current_date_obj <= end_date_obj:  
+    while current_date_obj < end_date_obj:  # 给定每个月的第一天就可以
         date_str = current_date_obj.strftime("%Y%m%d")  
         date_list.append(date_str)  
         current_date_obj += timedelta(days=1)  
@@ -108,8 +109,8 @@ def generate_date_list(start_date, end_date):
     return date_list 
   
 file_dir = "/blob/kmsw0eastau/data/hrrr"
-start_date = args.start_date
-end_date = "20201231"
+start_date = args.start_date # "20200701"
+end_date = args.end_date # "20200801"
 day_list = generate_date_list(start_date, end_date)  
 print(day_list)  
 hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
@@ -190,6 +191,7 @@ for day in day_list:
                 mean_M2_dict = mean_M2(loss_dict)
                 if reload_bool:
                     mean_M2_dict = torch.load(f"{file_dir}/Nwp_loss_file/mean_dict_lt1_3300.torch")
+                    reload_bool = False
                 mean_M2_dict.calc_mean_M2(loss_dict)
                 first_time = False
             else:
