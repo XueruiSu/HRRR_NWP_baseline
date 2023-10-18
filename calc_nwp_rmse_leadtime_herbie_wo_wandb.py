@@ -104,7 +104,7 @@ start_date = args.start_date # "20200701"
 end_date = args.end_date # "20200801"
 day_list = generate_date_list(start_date, end_date)  
 print(day_list)  
-hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09xuerui",
+hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
              "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
              "20", "21", "22", "23"]
 
@@ -143,6 +143,7 @@ for day in day_list:
             for var in PRESSURE_VARS+SURFACE_VARS:
                 if var in PRESSURE_VARS:
                     for level_ in atmos_level_herbie:
+                        try
                         input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
                         true_array = H_true.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
                         pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
@@ -166,10 +167,9 @@ for day in day_list:
             else:
                 mean_M2_dict.calc_mean_M2(loss_dict)
             # record mean and variance
-            for key in loss_dict.keys():
-                if mean_M2_dict.n >= 2:
-                    mean_dict, variance_dict = mean_M2_dict.output_mean_M2()
-                    print("loss dict", mean_M2_dict.n, len(loss_dict), len(mean_dict), len(variance_dict))
+            if mean_M2_dict.n >= 2:
+                mean_dict, variance_dict = mean_M2_dict.output_mean_M2()
+                print("loss dict", mean_M2_dict.n, len(loss_dict), len(mean_dict), len(variance_dict))
             if mean_M2_dict.n % 150 == 0:            
                 # 保存字典到文件  
                 torch.save(mean_M2_dict, f"{directory}/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.torch")
