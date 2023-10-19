@@ -10,7 +10,9 @@ import sys
 import argparse  
 from herbie import Herbie
 import random
-
+import shutil  
+import os  
+  
 # 带参数表示true，不带参数表示False.
 def get_args(argv=None):  
     parser = argparse.ArgumentParser(description='Put your hyperparameters')  
@@ -129,11 +131,11 @@ for day in day_list:
         file_name_true, file_name_pre = get_file_name(file_name_input, leadtime=args.leadtime)
         try:  
             H_input = Herbie(f"{file_name_input[0]} {file_name_input[1]}:00", model="hrrr", product="prs", 
-                             fxx=0, save_dir=f"~/{rand_str1}", overwrite=True)
+                             fxx=0, save_dir=f"/herbie_tmp/{rand_str1}", overwrite=True)
             H_true = Herbie(f"{file_name_true[0]} {file_name_true[1]}:00", model="hrrr", product="prs", 
-                            fxx=0, save_dir=f"~/{rand_str2}", overwrite=True)
+                            fxx=0, save_dir=f"/herbie_tmp/{rand_str2}", overwrite=True)
             H_pre = Herbie(f"{file_name_pre[0]} {file_name_pre[1]}:00", model="hrrr", product="prs", 
-                           fxx=args.leadtime, save_dir=f"~/{rand_str3}", overwrite=True)
+                           fxx=args.leadtime, save_dir=f"/herbie_tmp/{rand_str3}", overwrite=True)
             all_commands_successful = True  
         except Exception as e:  
             print(f"An error occurred: {e}")  
@@ -143,17 +145,46 @@ for day in day_list:
             for var in PRESSURE_VARS+SURFACE_VARS:
                 if var in PRESSURE_VARS:
                     for level_ in atmos_level_herbie:
-                        try
-                        input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
-                        true_array = H_true.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
-                        pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
+                        try:
+                            input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
+                        except Exception as e:  
+                            # 删除文件夹及其所有内容  
+                            shutil.rmtree(f"/herbie_tmp/{rand_str1}/hrrr/") 
+                            input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
+                        try: 
+                            true_array = H_true.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
+                        except Exception as e:  
+                            # 删除文件夹及其所有内容  
+                            shutil.rmtree(f"/herbie_tmp/{rand_str2}/hrrr/") 
+                            true_array = H_true.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0]
+                        try:
+                            pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
+                        except Exception as e:
+                            # 删除文件夹及其所有内容  
+                            shutil.rmtree(f"/herbie_tmp/{rand_str3}/hrrr/") 
+                            pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0]
                         loss_dict[f"{var}_{level_}_hrrr_forecast_mse"] = loss_func(true_array, pre_array)
                         loss_dict[f"{var}_{level_}_hrrr_base_mse"] = loss_func(true_array, input_array)
                         print(var, level_)
                 else:
-                    input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)
-                    true_array = H_true.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)
-                    pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)                    
+                    try:
+                        input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)
+                    except Exception as e:
+                        # 删除文件夹及其所有内容  
+                        shutil.rmtree(f"/herbie_tmp/{rand_str1}/hrrr/") 
+                        input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0]
+                    try:
+                        true_array = H_true.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)
+                    except Exception as e:
+                        # 删除文件夹及其所有内容  
+                        shutil.rmtree(f"/herbie_tmp/{rand_str2}/hrrr/") 
+                        true_array = H_true.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0]
+                    try:
+                        pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)     
+                    except Exception as e:
+                        # 删除文件夹及其所有内容  
+                        shutil.rmtree(f"/herbie_tmp/{rand_str3}/hrrr/") 
+                        pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0]               
                     loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(true_array, pre_array)
                     loss_dict[f"{var}_hrrr_base_mse"] = loss_func(true_array, input_array)
                     print(var)                    
@@ -191,6 +222,6 @@ with open(f"{directory}/mean_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", 
     pickle.dump(mean_dict, f)  
 with open(f"{directory}/variance_dict_lt{args.leadtime}_{str(mean_M2_dict.n)}.pkl", "wb") as f:  
     pickle.dump(variance_dict, f)     
-
+print("done!")
 
 

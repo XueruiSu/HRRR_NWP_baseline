@@ -1,7 +1,7 @@
 /__pycache__/
 /wandb/
 loss**
-mean_dict_**
+mean_dict_**.pkl
 variance_dict_**
 /Loss_file/
 /figure/
@@ -18,4 +18,4 @@ variance_dict_**
 /**/a.txt
 /Nwp_loss_file/
 /amlt/
-
+/figure_diffLT/
