@@ -3,7 +3,7 @@ This code is used to test the herbie package and compare the results with grib2 
 conclusion: the results are the same.
 '''
 from herbie import Herbie
-
+import numpy as np
 # generate a random string
 import random
 rand_str = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=10))
@@ -26,7 +26,8 @@ ds = H.xarray("UGRD:500 mb")
 # print(ds.to_array())
 print(ds)
 numpy_array = ds.to_array().values[0]
-
+np.save(f"./2020070104UGRD-500mb.npy", numpy_array)
+        
 print(numpy_array.shape)
 
 print(numpy_array.max(), numpy_array.min(), numpy_array.mean(), numpy_array.std())

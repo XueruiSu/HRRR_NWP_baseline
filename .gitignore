@@ -19,3 +19,9 @@ variance_dict_**
 /Nwp_loss_file/
 /amlt/
 /figure_diffLT/
+/data_missed_list_fixed_t2m.torch
+/file_names_fixed_TMP_L103.torch
+/data_missed_list_fixed_t2m.txt
+/**.torch
+/file_names_null_dict_num20.torch
+/hourly2_data_completion
