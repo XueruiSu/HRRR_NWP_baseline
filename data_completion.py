@@ -61,7 +61,7 @@ for index, file_name in enumerate(file_names):
                         input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)                    
                     data_all_var.append(input_array)
                     print(var, level_)
-        data_all_var = np.array(data_all_var)[np.newaxis, :]
+        data_all_var = np.array(data_all_var, dtype=np.float32)[np.newaxis, :]
         np.save(f"{file_dir}/{file_name}", data_all_var)
         t2 = time.time()
         print("index:", index, "day:", file_name, "time:", t2-t1, data_all_var.shape)              
