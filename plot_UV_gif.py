@@ -10,15 +10,11 @@ def helper_plot_U(smoke_values_extracted, quiver=0, UV=1):
     try:
         if quiver == 0:
             # (1059, 1799, 2)
-            plt.figure(figsize=(4.7, 8))
-            # plotting the pressure field as a contour
-            X_128, Y_128 = np.meshgrid(np.linspace(0, smoke_values_extracted.shape[0], smoke_values_extracted.shape[0]), 
-                                    np.linspace(0, smoke_values_extracted.shape[1], smoke_values_extracted.shape[1]))
-            print(X_128.shape, Y_128.shape, smoke_values_extracted.shape)
-            cf = plt.contourf(X_128, Y_128, smoke_values_extracted[..., UV].T, alpha=0.5, cmap=cm.viridis) 
-            cbar = plt.colorbar(cf)  
+            plt.figure(figsize=(8, 4.7))
+            plt.imshow(smoke_values_extracted[..., UV], alpha=1, cmap=cm.viridis, vmin=-30, vmax=30, origin="lower")
+            plt.colorbar()
+            plt.clim(-30, 30)
             # 设置colorbar的上下限  
-            cbar.set_clim(0, 30)  
             plt.xlabel('X')
             plt.ylabel('Y')
             if UV == 0:
@@ -27,20 +23,16 @@ def helper_plot_U(smoke_values_extracted, quiver=0, UV=1):
                 plt.title("10m_v_component_of_wind(m/s)")
         else: # quiver=1
             # (1059, 1799, 2)
-            plt.figure(figsize=(4.7, 8))
+            plt.figure(figsize=(8, 4.7))
             # plotting the pressure field as a contour
             resolution = 50
-            X_64, Y_64 = np.meshgrid(np.linspace(0, smoke_values_extracted.shape[0], smoke_values_extracted[::resolution,:].shape[0]), 
-                                    np.linspace(0, smoke_values_extracted.shape[1], smoke_values_extracted[:,::resolution].shape[1]))
+            X_64, Y_64 = np.meshgrid(np.linspace(0, smoke_values_extracted.shape[1], smoke_values_extracted[:,::resolution].shape[1]), 
+                                     np.linspace(0, smoke_values_extracted.shape[0], smoke_values_extracted[::resolution,:].shape[0]))
             print(X_64.shape, Y_64.shape, smoke_values_extracted[::resolution,::resolution].shape)
-            # plt.contourf(X_128, Y_128, smoke_values_extracted, alpha=0.5, cmap=cm.viridis)  
-            # plt.colorbar()
-            # plotting the pressure field outlines
-            # plt.contour(X_64, Y_64, smoke_values_extracted, cmap=cm.viridis)  
             # plotting velocity field
             plt.quiver(X_64, Y_64, 
-                    smoke_values_extracted[::resolution,::resolution, 0], 
-                    smoke_values_extracted[::resolution,::resolution, 1]) 
+                    smoke_values_extracted[::resolution,::resolution, 0].T, 
+                    smoke_values_extracted[::resolution,::resolution, 1].T) 
             plt.xlabel('X')
             plt.ylabel('Y')
             plt.title("quiver of 10m u(v) component of wind(m/s)")
@@ -76,19 +68,42 @@ if load:
 
 else:
     UV_data = np.load("UV_data.npy") # (10, 1059, 1799, 2)
+    smoke_values_extracted = UV_data[0]
+    UV = 0
+    plt.figure(figsize=(8, 4.7))
+    # plotting the pressure field as a contour
+    # X_128, Y_128 = np.meshgrid(np.linspace(0, smoke_values_extracted.shape[1], smoke_values_extracted.shape[1]), 
+    #                         np.linspace(0, smoke_values_extracted.shape[0], smoke_values_extracted.shape[0]))
+    # print(X_128.shape, Y_128.shape, smoke_values_extracted.shape)
+    # cf = plt.contourf(X_128, Y_128, smoke_values_extracted[..., UV], alpha=0.5, cmap=cm.viridis) 
+    # plt.colorbar(cf, extend='both')  
+    # cf.set_clim(vmin=-30, vmax=30)
+    plt.imshow(smoke_values_extracted[..., UV], alpha=1, cmap=cm.viridis, vmin=-30, vmax=30, origin="lower")
+    plt.colorbar()
+    plt.clim(-30, 30)
+    # 设置colorbar的上下限  
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.savefig("./figure_UV/U_component.png")
+    # assert 1==2
+    
+    UV_data = np.load("UV_data.npy") # (10, 1059, 1799, 2)
     print(UV_data[...,0] - UV_data[...,1])
     frames = []
     for i in range(UV_data.shape[0]):
-        frames.append(helper_plot_U(UV_data[i], 0, 0))
-    gif.save(frames, "U_component.gif", duration=100)
-    frames = []
-    for i in range(UV_data.shape[0]):
-        frames.append(helper_plot_U(UV_data[i], 0, 1))
-    gif.save(frames, "V_component.gif", duration=100)
-    frames = []
-    for i in range(UV_data.shape[0]):
+        print("quiver", i)
         frames.append(helper_plot_U(UV_data[i], 1))
-    gif.save(frames, "UV_quiver.gif", duration=100)
+    gif.save(frames, "./figure_UV/UV_quiver.gif", duration=100)
+    frames = []
+    for i in range(UV_data.shape[0]):
+        print("U", i)
+        frames.append(helper_plot_U(UV_data[i], 0, 0))
+    gif.save(frames, "./figure_UV/U_component.gif", duration=100)
+    frames = []
+    for i in range(UV_data.shape[0]):
+        print("V", i)
+        frames.append(helper_plot_U(UV_data[i], 0, 1))
+    gif.save(frames, "./figure_UV/V_component.gif", duration=100)
     
     
     
