@@ -18,18 +18,18 @@ def generate_date_list(start_date, end_date):
         current_date_obj += timedelta(days=1)  
     return date_list 
 
-# directory = "/blob/kmsw0eastau/data/hrrr/hourly2_fixed_TMP_L103"
-# # 获取目录下的所有文件和文件夹名  
-# filenames = os.listdir(directory)  
-# file_names = [name for name in filenames if os.path.isfile(os.path.join(directory, name)) and ".npy" in name] 
-# sorted_files = sorted(file_names, key=lambda x: x[:-4])  
-# # 打印结果  
-# print(file_names, len(file_names))  
-# torch.save(file_names, "file_names_fixed_TMP_L103.torch")
-# assert 1==444
+directory = "/weather-blob/kms1/hrrr/hourly_new_pre_var"
+# 获取目录下的所有文件和文件夹名  
+filenames = os.listdir(directory)  
+file_names = [name for name in filenames if os.path.isfile(os.path.join(directory, name)) and ".npy" in name] 
+sorted_files = sorted(file_names, key=lambda x: x[:-4])  
+# 打印结果  
+print(file_names, len(file_names))  
+torch.save(file_names, "hourly_new_pre_var-2.torch")
+assert 1==444
 
-file_names = torch.load("file_names_fixed_TMP_L103.torch")
-print("hourly2_fixed_TMP_L103 file names", file_names, len(file_names)) 
+file_names = torch.load("hourly_new_pre_var.torch")
+print("hourly_new_pre_var file names", file_names, len(file_names)) 
 # assert 1==2
 
 start_date = "20190101"
@@ -38,7 +38,7 @@ day_list = generate_date_list(start_date, end_date)
 hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
              "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
              "20", "21", "22", "23"]
-
+print("real num of day_list", len(day_list))
 data_missed_list = []
 all_num = 0
 for day in day_list:

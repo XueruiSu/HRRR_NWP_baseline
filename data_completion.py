@@ -1,5 +1,5 @@
 import time
-from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie
+from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie_new
 from datetime import datetime, timedelta  
 import numpy as np
 import torch
@@ -20,9 +20,9 @@ args = get_args(sys.argv[1:])
 print(args)  
 
 rand_str1 = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=20))
-os.makedirs(f"/home/v-xueruisu/{rand_str1}", exist_ok=True)
+os.makedirs(f"./{rand_str1}", exist_ok=True)
 
-file_dir = "/blob/weathers2_FNO/xuerui/Dual-Weather/project/weather_metrics_test/hourly2_data_completion"
+file_dir = "/weather-blob/kms1/hrrr/hourly_new_pre_var"
 file_names_null_dict = []
 file_names_null_num = 0
 file_names = torch.load("data_missed_list_fixed_t2m.torch")
@@ -33,7 +33,7 @@ for index, file_name in enumerate(file_names):
     hour = file_name[8:10]
     try:  
         H_input = Herbie(f"{day} {hour}:00", model="hrrr", product="prs", 
-                            fxx=0, save_dir=f"/home/v-xueruisu/{rand_str1}", overwrite=True)
+                            fxx=0, save_dir=f"./{rand_str1}", overwrite=True)
         print(H_input.grib)
         all_commands_successful = True  
     except Exception as e:  
@@ -47,17 +47,17 @@ for index, file_name in enumerate(file_names):
                     input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)
                 except Exception as e:
                     # 删除文件夹及其所有内容  
-                    shutil.rmtree(f"/home/v-xueruisu/{rand_str1}/hrrr/") 
+                    shutil.rmtree(f"./{rand_str1}/hrrr/") 
                     input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0]         
                 data_all_var.append(input_array)
                 print(var)                    
             else:
-                for level_ in atmos_level_herbie:
+                for level_ in atmos_level_herbie_new:
                     try:
                         input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
                     except Exception as e:  
                         # 删除文件夹及其所有内容  
-                        shutil.rmtree(f"/home/v-xueruisu/{rand_str1}/hrrr/") 
+                        shutil.rmtree(f"./{rand_str1}/hrrr/") 
                         input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)                    
                     data_all_var.append(input_array)
                     print(var, level_)
