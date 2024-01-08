@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 leadtime = 5
 leadtime_list = [1, 2, 3, 4, 5, 6]
 empty_list = []
-
+data_dir = "Nwp_loss_file_new_dataset"
 
 for leadtime in leadtime_list:
     start_day_all = "20200701"
@@ -30,9 +30,9 @@ for leadtime in leadtime_list:
         day_name = f"{start_day}_to_{end_day}_lt{leadtime}"
         try:
             # 从文件中加载字典  
-            with open(f"./Nwp_loss_file/{day_name}/mean_dict_lt{leadtime}_24.pkl", "rb") as f:  
+            with open(f"./{data_dir}/{day_name}/mean_dict_lt{leadtime}_24.pkl", "rb") as f:  
                 mean_dict = pickle.load(f)  
-            with open(f"./Nwp_loss_file/{day_name}/variance_dict_lt{leadtime}_24.pkl", "rb") as f:
+            with open(f"./{data_dir}/{day_name}/variance_dict_lt{leadtime}_24.pkl", "rb") as f:
                 variance_dict = pickle.load(f)
             if start_day == start_day_all:
                 mean_dict_all = mean_dict
@@ -48,16 +48,17 @@ for leadtime in leadtime_list:
             empty_list.append(day_name)
             print(day_name, "no file!!!!!!!")
         start_day_time = end_day_time
-    with open(f"./Nwp_loss_file/202007to12/mean_dict_lt{leadtime}.pkl", "wb") as f:  
+    with open(f"./{data_dir}/202007to12/mean_dict_lt{leadtime}.pkl", "wb") as f:  
         pickle.dump(mean_dict_all, f)  
-    with open(f"./Nwp_loss_file/202007to12/variance_dict_lt{leadtime}.pkl", "wb") as f:  
+    with open(f"./{data_dir}/202007to12/variance_dict_lt{leadtime}.pkl", "wb") as f:  
         pickle.dump(variance_dict_all, f)     
 
-
-# empty_list = np.load("./Nwp_loss_file/empty_list1019-1122.npy")
+print("empty_list:")
+# empty_list = np.load(f"./{data_dir}/empty_list1019-1122.npy")
 for empty_name in empty_list:
     print(empty_name)
+print("len of empty_list:", len(empty_list))
 
-np.save("./Nwp_loss_file/empty_list1019-1122.npy", empty_list)
+np.save(f"./{data_dir}/empty_list1019-1122.npy", empty_list)
 
     

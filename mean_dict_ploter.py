@@ -10,7 +10,7 @@ import numpy as np
 import pickle
 import os
 import torch
-from var_dict import PRESSURE_VARS, SURFACE_VARS, atmos_level2index_in_atmos_level_all, atmos_level_herbie
+from var_dict import PRESSURE_VARS, SURFACE_VARS, atmos_level_herbie_new
 from matplotlib import pyplot as plt
 import pickle
 from datetime import datetime, timedelta  
@@ -98,7 +98,7 @@ def plot_based_acc_2_1_2(var_mapping, mean_dict: dict, variance_dict: dict,
     mean_dict_nwp, mean_dict_base = {}, {}
     std_dict_nwp, std_dict_base = {}, {}
     for var_name in PRESSURE_VARS:
-        for level_ in atmos_level_herbie:
+        for level_ in atmos_level_herbie_new:
             for var_str in mean_dict.keys():
                 if var_name in var_mapping.keys():
                     var_mapping_key = f"{var_mapping[var_name]}_{level_}"
@@ -179,13 +179,15 @@ var_mapping = {
 print("choosen var name:", SURFACE_VARS + PRESSURE_VARS)
 
 leadtime_list = [1, 2, 3, 4, 5, 6]
+data_dir = "Nwp_loss_file_new_dataset/"
+
 # 读取数据
 mean_dict_all, variance_dict_all = [], []
 for leadtime in leadtime_list:
     # 从文件中加载字典  
-    with open(f"./Nwp_loss_file/202007to12/mean_dict_lt{leadtime}.pkl", "rb") as f:  
+    with open(f"./{data_dir}/202007to12/mean_dict_lt{leadtime}.pkl", "rb") as f:  
         mean_dict = pickle.load(f)  
-    with open(f"./Nwp_loss_file/202007to12/variance_dict_lt{leadtime}.pkl", "rb") as f:
+    with open(f"./{data_dir}/202007to12/variance_dict_lt{leadtime}.pkl", "rb") as f:
         variance_dict = pickle.load(f)
     mean_dict_all.append(mean_dict)
     variance_dict_all.append(variance_dict)    
@@ -217,7 +219,7 @@ for var_name in SURFACE_VARS:
             elif var_str.startswith(f"{var_name}_hrrr_forecast_mse"):
                 mean_leadtime_plot_nwp.append(mean_dict_leadtime[var_str])
                 std_leadtime_plot_nwp.append((variance_dict_all[mean_index][var_str] ** 0.5))
-    path_save_nwp = f"./figure_diffLT/figure_nwp_{var_mapping_key}.png"
+    path_save_nwp = f"./figure_diffLT_new_data/figure_nwp_{var_mapping_key}.png"
     print(path_save_nwp)
     plot_different_lt(leadtime_list, 
                       np.array(mean_leadtime_plot_nwp), np.array(mean_leadtime_plot_persistent), 
@@ -227,7 +229,7 @@ for var_name in SURFACE_VARS:
     persistent_csv.append(np.array(mean_leadtime_plot_persistent))
 
 for var_name in PRESSURE_VARS:
-    for level_ in atmos_level_herbie:
+    for level_ in atmos_level_herbie_new:
         var_mapping_key = f"{var_mapping[var_name]}_{level_}"
         mean_leadtime_plot_persistent, std_leadtime_plot_persistent = [], []
         mean_leadtime_plot_nwp, std_leadtime_plot_nwp = [], []
@@ -239,7 +241,7 @@ for var_name in PRESSURE_VARS:
                 elif var_str.startswith(f"{var_name}_{level_}_hrrr_forecast_mse"):
                     mean_leadtime_plot_nwp.append(mean_dict_leadtime[var_str])
                     std_leadtime_plot_nwp.append((variance_dict_all[mean_index][var_str] ** 0.5))
-        path_save_nwp = f"./figure_diffLT/figure_nwp_{var_mapping_key}.png"
+        path_save_nwp = f"./figure_diffLT_new_data/figure_nwp_{var_mapping_key}.png"
         print(path_save_nwp)
         plot_different_lt(leadtime_list, 
                     np.array(mean_leadtime_plot_nwp), np.array(mean_leadtime_plot_persistent), 
@@ -248,8 +250,8 @@ for var_name in PRESSURE_VARS:
         nwp_csv.append(np.array(mean_leadtime_plot_nwp))
         persistent_csv.append(np.array(mean_leadtime_plot_persistent))
 
-nwp_csv_path = "./Nwp_loss_file/202007to12/nwp_loss.csv"
-persistent_csv_path = "./Nwp_loss_file/202007to12/persistent_loss.csv"
+nwp_csv_path = f"./{data_dir}/202007to12/nwp_loss.csv"
+persistent_csv_path = f"./{data_dir}/202007to12/persistent_loss.csv"
 np.savetxt(nwp_csv_path, np.array(nwp_csv), delimiter=',')
 np.savetxt(persistent_csv_path, np.array(persistent_csv), delimiter=',')
 

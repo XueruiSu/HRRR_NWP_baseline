@@ -1,6 +1,6 @@
 import os
 import time
-from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie
+from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie_new
 from datetime import datetime, timedelta  
 import numpy as np
 import pickle  
@@ -114,7 +114,7 @@ loss_func = RMSE_cut
 
 file_dir = "/blob/weathers2_FNO/xuerui/Dual-Weather/project/weather_metrics_test"
 file_name = f"{start_date}_to_{end_date}_lt{args.leadtime}"
-directory = f"{file_dir}/Nwp_loss_file/{file_name}"
+directory = f"{file_dir}/Nwp_loss_file_new_dataset/{file_name}"
 os.makedirs(directory, exist_ok=True)
 
 first_time = True
@@ -144,7 +144,7 @@ for day in day_list:
             loss_dict = {}
             for var in PRESSURE_VARS+SURFACE_VARS:
                 if var in PRESSURE_VARS:
-                    for level_ in atmos_level_herbie:
+                    for level_ in atmos_level_herbie_new:
                         try:
                             input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
                         except Exception as e:  

@@ -28,3 +28,8 @@ variance_dict_**
 /data_completion_float_test.py
 /figure_UV/
 /figure_gif_resconstruction/
+/**.torch
+/file_names_null_dict_num20.torch
+/file_names.torch
+/Nwp_loss_file_new_dataset/
+/figure_diffLT_new_data/
