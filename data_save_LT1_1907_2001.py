@@ -6,7 +6,7 @@ Notation:
 4. 注意起始日期
 '''
 import time
-from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie_new
+from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie
 from datetime import datetime, timedelta  
 import numpy as np
 import pickle  
@@ -100,7 +100,7 @@ for day in day_list:
                     data_all_var.append(input_array)
                     print(var)                    
                 else:
-                    for level_ in atmos_level_herbie_new:
+                    for level_ in atmos_level_herbie:
                         try:
                             input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
                         except Exception as e:  

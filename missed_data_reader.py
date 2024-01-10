@@ -28,8 +28,8 @@ print(file_names, len(file_names))
 torch.save(file_names, "hourly_new_pre_var-2.torch")
 assert 1==444
 
-file_names = torch.load("hourly_new_pre_var.torch")
-print("hourly_new_pre_var file names", file_names, len(file_names)) 
+file_names = torch.load("hourly_new_pre_var-2.torch")
+print("hourly_new_pre_var file names", len(file_names)) 
 # assert 1==2
 
 start_date = "20190101"
