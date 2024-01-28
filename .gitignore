@@ -33,3 +33,7 @@ variance_dict_**
 /file_names.torch
 /Nwp_loss_file_new_dataset/
 /figure_diffLT_new_data/
+/Nwp_loss_file_two_dataset/
+/figure_diffLT_two_data/
+/Nwp_acc_loss_file_two_dataset/
+/figure_diffLT_acc/

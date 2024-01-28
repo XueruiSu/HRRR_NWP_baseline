@@ -1,6 +1,6 @@
 import os
 import time
-from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie_all
+from var_dict import PRESSURE_VARS, SURFACE_VARS, var_mapping_hrrrlong_herbie, atmos_level_herbie
 from datetime import datetime, timedelta  
 import numpy as np
 import pickle  
@@ -12,14 +12,16 @@ from herbie import Herbie
 import random
 import shutil  
 import os  
-  
+from calc_nwp_acc_loss_fucntion import anomaly_correlation_coefficient_oneVar
+from calc_nwp_acc_VarMap import var_mapping_for_accMetrics
+
 # 带参数表示true，不带参数表示False.
 def get_args(argv=None):  
     parser = argparse.ArgumentParser(description='Put your hyperparameters')  
     parser.add_argument('-leadtime', '--leadtime', default=1, type=int, help='leadtime')  
     parser.add_argument('-start_date', '--start_date', default="20190701", type=str, help='start_date')  
     parser.add_argument('-end_date', '--end_date', default="20190801", type=str, help='end_date')  
-    parser.add_argument('-file_dir', '--file_dir', default="Nwp_loss_file_two_dataset", type=str, help='file_dir')  
+    parser.add_argument('-file_dir', '--file_dir', default="Nwp_acc_loss_file_two_dataset", type=str, help='file_dir')  
     return parser.parse_args(argv)  
   
 # args parser  
@@ -89,19 +91,9 @@ def generate_date_list(start_date, end_date):
   
     return date_list 
 
-def RMSE(target, pre):
-    return np.sqrt(((pre - target)**2).mean())
 
-def RMSE_cut(target, pre, cut_len=60):
-    SE = (pre - target)**2
-    return np.sqrt((SE[cut_len:-cut_len, cut_len:-cut_len]).mean())
+normalize_mean2 = pickle.load(open("./normalize_mean2.pkl", "rb"))
 
-def SSIM(target, pre):
-    target = torch.from_numpy(target).unsqueeze(0).unsqueeze(0)
-    pre = torch.from_numpy(pre).unsqueeze(0).unsqueeze(0)
-    ssim = StructuralSimilarityIndexMeasure(data_range=None)
-    ssim_score = ssim(pre, target)
-    return ssim_score.item()
 
 start_date = args.start_date # "20200701"
 end_date = args.end_date # "20200801"
@@ -111,7 +103,7 @@ hour_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
              "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
              "20", "21", "22", "23"]
 
-loss_func = RMSE
+loss_func = anomaly_correlation_coefficient_oneVar
 root_file_dir = "/blob/weathers2_FNO/xuerui/Dual-Weather/project/weather_metrics_test"
 file_name = f"{start_date}_to_{end_date}_lt{args.leadtime}"
 directory = f"{root_file_dir}/{args.file_dir}/{file_name}"
@@ -144,7 +136,7 @@ for day in day_list:
             loss_dict = {}
             for var in PRESSURE_VARS+SURFACE_VARS:
                 if var in PRESSURE_VARS:
-                    for level_ in atmos_level_herbie_all:
+                    for level_ in atmos_level_herbie:
                         try:
                             input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0] # (1059, 1799)
                         except Exception as e:  
@@ -163,9 +155,9 @@ for day in day_list:
                             # 删除文件夹及其所有内容  
                             shutil.rmtree(f"/herbie_tmp/{rand_str3}/hrrr/") 
                             pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}:{level_} mb").to_array().values[0]
-                        loss_dict[f"{var}_{level_}_hrrr_forecast_mse"] = loss_func(true_array, pre_array)
-                        loss_dict[f"{var}_{level_}_hrrr_base_mse"] = loss_func(true_array, input_array)
-                        print(var, level_)
+                        loss_dict[f"{var}_{level_}_hrrr_forecast_mse"] = loss_func(true_array, pre_array, normalize_mean2[f"{var_mapping_for_accMetrics[var]}_{level_}"])
+                        loss_dict[f"{var}_{level_}_hrrr_base_mse"] = loss_func(true_array, input_array, normalize_mean2[f"{var_mapping_for_accMetrics[var]}_{level_}"])
+                        print(var, level_, loss_dict[f"{var}_{level_}_hrrr_forecast_mse"], loss_dict[f"{var}_{level_}_hrrr_base_mse"])
                 else:
                     try:
                         input_array = H_input.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0] # (1059, 1799)
@@ -185,9 +177,9 @@ for day in day_list:
                         # 删除文件夹及其所有内容  
                         shutil.rmtree(f"/herbie_tmp/{rand_str3}/hrrr/") 
                         pre_array = H_pre.xarray(f"{var_mapping_hrrrlong_herbie[var]}").to_array().values[0]               
-                    loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(true_array, pre_array)
-                    loss_dict[f"{var}_hrrr_base_mse"] = loss_func(true_array, input_array)
-                    print(var)                    
+                    loss_dict[f"{var}_hrrr_forecast_mse"] = loss_func(true_array, pre_array, normalize_mean2[f"{var_mapping_for_accMetrics[var]}"])
+                    loss_dict[f"{var}_hrrr_base_mse"] = loss_func(true_array, input_array, normalize_mean2[f"{var_mapping_for_accMetrics[var]}"])
+                    print(var, loss_dict[f"{var}_hrrr_forecast_mse"], loss_dict[f"{var}_hrrr_base_mse"])                    
             t2 = time.time()
             print("day:", file_name_input, file_name_true, file_name_pre, "time:", t2-t1) # 计算一条数据上所有的loss所需的时间。          
             # calc mean and variance
